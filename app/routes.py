@@ -66,7 +66,7 @@ def handle_specific_task(task_id):
     
     task = Task.query.get(task_id)
     if task is None:
-        pass
+        return "", 404
 
     if request.method == "GET":
         return {
