@@ -11,93 +11,126 @@ goal_bp = Blueprint("goal_bp", __name__, url_prefix="/goals")
 # As a client, I want to be able to make a POST 
 # request to /tasks with the following HTTP request body
 
-@task_bp.route("", methods=["POST", "GET"])
-def handle_tasks():
-    request_body = request.get_json()
-    response_body = []
+# @task_bp.route("", methods=["POST", "GET"])
+# def handle_tasks():
+#     request_body = request.get_json()
+#     response_body = []
 
+#     if request.method == "GET":
+#         tasks = Task.query.all()
+#         #return tasks
+#         # if tasks is None:
+#         #     return {
+#         #         "details" : "You have no scheduled tasks"
+#         #     }, 400
+        
+#         # else:
+#         for task in tasks:
+#             response_body.append({
+#                 "id" : task.id,
+#                 "title": task.title,
+#                 "description": task.description,
+#                 "is_complete": False
+#             }) 
+#         return jsonify(response_body)
+
+#     elif request.method == "POST":
+#         if "title" not in request_body or "description" not in request_body or "completed_at" not in request_body:
+#             return {
+#                 "details": "Invalid data"
+#             }, 400
+
+#         new_task = Task(
+#             title = request_body["title"],
+#             description = request_body["description"],
+#             completed_at = request_body["completed_at"]
+#         )
+#         #try:
+#         db.session.add(new_task)
+#         db.session.commit()
+#         # except:
+#         #     pass
+#         #     return # error
+
+#         return {
+#             "task" : {
+#                 "id" : new_task.id,
+#                 "title" : new_task.title,
+#                 "description" : new_task.description,
+#                 "is_complete" : False
+#             }
+#         }, 201
+
+# @task_bp.route("/<task_id>", methods=["PUT", "GET", "DELETE"])
+# def handle_specific_task(task_id):
+    
+#     task = Task.query.get(task_id)
+#     if task is None:
+#         return "", 404
+
+#     if request.method == "GET":
+#         return {
+#             "task" : {
+#                 "id" : task.id,
+#                 "description" : task.description,
+#                 "title": task.title,
+#                 "is_complete" : False
+#             },
+#         }, 200
+
+#     elif request.method == "PUT":
+#         form_data = request.get_json()
+
+#         task.description = form_data["description"]
+#         task.title = form_data["title"]
+
+#         db.session.commit()
+#         return {
+#             "task": {
+#                 "id": task.id,
+#                 "title": task.title,
+#                 "description": task.description,
+#                 "is_complete": False
+#         }
+#         }, 200
+
+#     elif request.method == "DELETE":
+#         db.session.delete(task)
+#         db.session.commit()
+
+#         return {
+#             "details" : f'Task {task.id} "{task.title}" successfully deleted'
+#             }, 200
+
+# ***** wave 2 routes ****
+@task_bp.route("", methods=["GET"])
+def get_sorted_tasks():
+    request_body = request.get_json()
+    
     if request.method == "GET":
         tasks = Task.query.all()
-        #return tasks
-        # if tasks is None:
-        #     return {
-        #         "details" : "You have no scheduled tasks"
-        #     }, 400
-        
-        # else:
+        sorting_parameter = request.args.get("sort")
+
+        list_of_tasks = []
+
         for task in tasks:
-            response_body.append({
-                "id" : task.id,
-                "title": task.title,
-                "description": task.description,
-                "is_complete": False
-            }) 
-        return jsonify(response_body)
+            list_of_tasks.append(
+                {
+                    "id": task.id,
+                    "title": task.title,
+                    "description": task.description,
+                    "is_complete": False
+                }
+            )
 
-    elif request.method == "POST":
-        if "title" not in request_body or "description" not in request_body or "completed_at" not in request_body:
-            return {
-                "details": "Invalid data"
-            }, 400
+        if sorting_parameter == 'asc':
 
-        new_task = Task(
-            title = request_body["title"],
-            description = request_body["description"],
-            completed_at = request_body["completed_at"]
-        )
-        #try:
-        db.session.add(new_task)
-        db.session.commit()
-        # except:
-        #     pass
-        #     return # error
+            list_of_tasks.sort(key=lambda x:ord(x["title"][0]))
 
-        return {
-            "task" : {
-                "id" : new_task.id,
-                "title" : new_task.title,
-                "description" : new_task.description,
-                "is_complete" : False
-            }
-        }, 201
+        elif sorting_parameter == 'desc':
+            list_of_tasks.sort(reverse=True, key=lambda x:ord(x["title"][0]))
 
-@task_bp.route("/<task_id>", methods=["PUT", "GET", "DELETE"])
-def handle_specific_task(task_id):
+        return jsonify(list_of_tasks)
+
     
-    task = Task.query.get(task_id)
-    if task is None:
-        return "", 404
 
-    if request.method == "GET":
-        return {
-            "task" : {
-                "id" : task.id,
-                "description" : task.description,
-                "title": task.title,
-                "is_complete" : False
-            },
-        }, 200
-
-    elif request.method == "PUT":
-        form_data = request.get_json()
-
-        task.description = form_data["description"]
-        task.title = form_data["title"]
-
-        db.session.commit()
-        return {
-            "task": {
-                "id": task.id,
-                "title": task.title,
-                "description": task.description,
-                "is_complete": False
-        }
-        }, 200
-
-    elif request.method == "DELETE":
-        db.session.delete(task)
-        db.session.commit()
-
-        return {
-            "details" : f'Task {task.id} "{task.title}" successfully deleted'
-            }, 200
