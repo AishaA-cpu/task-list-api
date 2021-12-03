@@ -3,13 +3,13 @@ from flask.helpers import make_response
 from app import db
 from app.models.goal import Goal
 from app.models.task import Task
+from datetime import date, datetime
 
 task_bp = Blueprint("task_bp", __name__, url_prefix="/tasks")
 goal_bp = Blueprint("goal_bp", __name__, url_prefix="/goals")
 
-# Create a Task: Valid Task With null completed_at
-# As a client, I want to be able to make a POST 
-# request to /tasks with the following HTTP request body
+# break out request methods into individual functions
+# add doct strings into EP definitons
 
 @task_bp.route("", methods=["POST", "GET"])
 def handle_tasks():
@@ -34,13 +34,15 @@ def handle_tasks():
                 "description": task.description,
                 "is_complete": False
             }) 
-        #return jsonify(response_body)
+        
         if sorting_parameter and sorting_parameter == "asc":
             response_body.sort(key=lambda x:ord(x["title"][0]))
             return jsonify(response_body)
+
         elif sorting_parameter and sorting_parameter == "desc":
             response_body.sort(reverse=True, key=lambda x:ord(x["title"][0]))
             return jsonify(response_body)
+
         else:
             return jsonify(response_body)
 
@@ -61,15 +63,25 @@ def handle_tasks():
         # except:
         #     pass
         #     return # error
+        if request_body["completed_at"] is None:
+            return {
+                "task" : {
+                    "id" : new_task.id,
+                    "title" : new_task.title,
+                    "description" : new_task.description,
+                    "is_complete" : False
+                }
+            }, 201
 
-        return {
-            "task" : {
-                "id" : new_task.id,
-                "title" : new_task.title,
-                "description" : new_task.description,
-                "is_complete" : False
-            }
-        }, 201
+        else:
+            return {
+                "task" : {
+                    "id" : new_task.id,
+                    "title" : new_task.title,
+                    "description" : new_task.description,
+                    "is_complete" : True
+                }
+            }, 201
 
 @task_bp.route("/<task_id>", methods=["PUT", "GET", "DELETE"])
 def handle_specific_task(task_id):
@@ -95,14 +107,25 @@ def handle_specific_task(task_id):
         task.title = form_data["title"]
 
         db.session.commit()
-        return {
-            "task": {
-                "id": task.id,
-                "title": task.title,
-                "description": task.description,
-                "is_complete": False
-        }
-        }, 200
+        if form_data["completed_at"] is None:
+            return {
+                "task" : {
+                    "id" : task.id,
+                    "title" : task.title,
+                    "description" : task.description,
+                    "is_complete" : False
+                }
+            }, 200
+
+        else:
+            return {
+                "task" : {
+                    "id" : task.id,
+                    "title" : task.title,
+                    "description" : task.description,
+                    "is_complete" : True
+                }
+            }, 200
 
     elif request.method == "DELETE":
         db.session.delete(task)
@@ -111,8 +134,48 @@ def handle_specific_task(task_id):
         return {
             "details" : f'Task {task.id} "{task.title}" successfully deleted'
             }, 200
+# *** wave 3 begins ***
+@task_bp.route("/<task_id>/mark_complete", methods=["PATCH"])
+def update_specific_task_complete(task_id):
+    request_body = request.get_json()
+    #form_data = request_body["is_complete"]
+    task = Task.query.get(task_id)
+
+    if task is None:
+        return "", 404
+
+    task.completed_at = date.today()
+    db.session.commit()
+
+    return {
+        "task": {
+                "id": task.id,
+                "title": task.title,
+                "description": task.description,
+                "is_complete": True
+        }
+    }, 200
 
 
 
+@task_bp.route("/<task_id>/mark_incomplete", methods=["PATCH"])
+def update_specific_task_incomplete(task_id):
+    request_body = request.get_json()
+    task = Task.query.get(task_id)
+
+    if task is None:
+        return "", 404
+
+    task.completed_at = None
+    db.session.commit()
+
+    return {
+        "task": {
+                "id": task.id,
+                "title": task.title,
+                "description": task.description,
+                "is_complete": False
+        }
+    }, 200
     
 
