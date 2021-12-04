@@ -4,6 +4,7 @@ from app import db
 from app.models.goal import Goal
 from app.models.task import Task
 from datetime import date, datetime
+import requests as r
 
 task_bp = Blueprint("task_bp", __name__, url_prefix="/tasks")
 goal_bp = Blueprint("goal_bp", __name__, url_prefix="/goals")
