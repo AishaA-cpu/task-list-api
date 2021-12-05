@@ -57,7 +57,8 @@ def add_task():
 
     request_body = request.get_json()
     
-    if "title" not in request_body or "description" not in request_body or "completed_at" not in request_body:
+    if ("title" not in request_body or "description" not in 
+        request_body or "completed_at" not in request_body):
         return {
             "details": "Invalid data"
         }, HTTPStatus.BAD_REQUEST
@@ -96,7 +97,7 @@ def get_specific_task(task_id):
     
     task = Task.query.get(task_id)
     if task is None:
-        return "", 404
+        return "", HTTPStatus.NOT_FOUND
 
     if task.completed_at is None:
         return {
@@ -116,14 +117,6 @@ def get_specific_task(task_id):
                 "is_complete" : True
             }
     }, HTTPStatus.OK
-    # return {
-    #     "task" : {
-    #         "id" : task.id,
-    #         "description" : task.description,
-    #         "title": task.title,
-    #         "is_complete" : False
-    #     },
-    # }, 200
 
 
 @task_bp.route("/<task_id>", methods=["PUT"])
