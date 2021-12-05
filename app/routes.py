@@ -4,7 +4,12 @@ from app import db
 from app.models.goal import Goal
 from app.models.task import Task
 from datetime import date, datetime
-import requests as r
+import requests 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 task_bp = Blueprint("task_bp", __name__, url_prefix="/tasks")
 goal_bp = Blueprint("goal_bp", __name__, url_prefix="/goals")
@@ -21,13 +26,20 @@ def handle_tasks():
     sorting_parameter = request.args.get("sort")
 
     for task in tasks:
-        response_body.append({
-            "id" : task.id,
-            "title": task.title,
-            "description": task.description,
-            "is_complete": False
-        }) 
-    
+        if task.completed_at is None:
+            response_body.append({
+                "id" : task.task_id,
+                "title": task.title,
+                "description": task.description,
+                "is_complete": False
+            }) 
+        else:
+            response_body.append({
+                "id" : task.task_id,
+                "title": task.title,
+                "description": task.description,
+                "is_complete": True
+            }) 
     if sorting_parameter and sorting_parameter == "asc":
         response_body.sort(key=lambda x:ord(x["title"][0]))
         return jsonify(response_body)
@@ -48,34 +60,35 @@ def add_task():
         return {
             "details": "Invalid data"
         }, 400
-
-    new_task = Task(
-        title = request_body["title"],
-        description = request_body["description"],
-        completed_at = request_body["completed_at"]
-    )
-    #try:
-    db.session.add(new_task)
-    db.session.commit()
-
-    if new_task.completed_at is None:
-        return {
-            "task" : {
-                "id" : new_task.id,
-                "title" : new_task.title,
-                "description" : new_task.description,
-                "is_complete" : False
-            }
-        }, 201
+    
     else:
-        return {
-            "task" : {
-                "id" : new_task.id,
-                "title" : new_task.title,
-                "description" : new_task.description,
-                "is_complete" : True
-            }
-        }, 201
+        new_task = Task(
+            title = request_body["title"],
+            description = request_body["description"],
+            completed_at = request_body["completed_at"]
+        )
+        #try:
+        db.session.add(new_task)
+        db.session.commit()
+
+        if new_task.completed_at is None:
+            return {
+                "task" : {
+                    "id" : new_task.task_id,
+                    "title" : new_task.title,
+                    "description" : new_task.description,
+                    "is_complete" : False
+                }
+            }, 201
+        else:
+            return {
+                "task" : {
+                    "id" : new_task.task_id,
+                    "title" : new_task.title,
+                    "description" : new_task.description,
+                    "is_complete" : True
+                }
+            }, 201
 
 @task_bp.route("/<task_id>", methods=["GET"])
 def get_specific_task(task_id):
@@ -84,14 +97,32 @@ def get_specific_task(task_id):
     if task is None:
         return "", 404
 
-    return {
-        "task" : {
-            "id" : task.id,
-            "description" : task.description,
-            "title": task.title,
-            "is_complete" : False
-        },
+    if task.completed_at is None:
+        return {
+            "task" : {
+                "id" : task.task_id,
+                "title" : task.title,
+                "description" : task.description,
+                "is_complete" : False
+            }
+        }, 200
+    else:
+        return {
+            "task" : {
+                "id" : task.task_id,
+                "title" : task.title,
+                "description" : task.description,
+                "is_complete" : True
+            }
     }, 200
+    # return {
+    #     "task" : {
+    #         "id" : task.id,
+    #         "description" : task.description,
+    #         "title": task.title,
+    #         "is_complete" : False
+    #     },
+    # }, 200
 
 
 @task_bp.route("/<task_id>", methods=["PUT"])
@@ -109,7 +140,7 @@ def change_specific_task(task_id):
     if task.completed_at is None:
         return {
             "task" : {
-                "id" : task.id,
+                "id" : task.task_id,
                 "title" : task.title,
                 "description" : task.description,
                 "is_complete" : False
@@ -118,7 +149,7 @@ def change_specific_task(task_id):
     else:
         return {
             "task" : {
-                "id" : task.id,
+                "id" : task.task_id,
                 "title" : task.title,
                 "description" : task.description,
                 "is_complete" : True
@@ -135,7 +166,7 @@ def delete_specific_task(task_id):
     db.session.commit()
 
     return {
-        "details" : f'Task {task.id} "{task.title}" successfully deleted'
+        "details" : f'Task {task.task_id} "{task.title}" successfully deleted'
         }, 200
 
 
@@ -151,10 +182,19 @@ def update_specific_task_complete(task_id):
 
     task.completed_at = date.today()
     db.session.commit()
+    datas = {
+        "channel":"task-notifications",
+        "text":f"Someone just completed the task {task.title}"
+        
+    }
+    header = {
+        "authorization": os.environ.get("SLACK_ACCESS_TOKEN")
+    }
+    requests.post('https://slack.com/api/chat.postMessage', params=datas, headers=header)
 
     return {
         "task": {
-                "id": task.id,
+                "id": task.task_id,
                 "title": task.title,
                 "description": task.description,
                 "is_complete": True
@@ -176,7 +216,7 @@ def update_specific_task_incomplete(task_id):
 
     return {
         "task": {
-                "id": task.id,
+                "id": task.task_id,
                 "title": task.title,
                 "description": task.description,
                 "is_complete": False
