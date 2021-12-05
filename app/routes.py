@@ -6,6 +6,7 @@ from app.models.task import Task
 from datetime import date, datetime
 import requests 
 from dotenv import load_dotenv
+from http import HTTPStatus
 import os
 
 load_dotenv()
@@ -59,7 +60,7 @@ def add_task():
     if "title" not in request_body or "description" not in request_body or "completed_at" not in request_body:
         return {
             "details": "Invalid data"
-        }, 400
+        }, HTTPStatus.BAD_REQUEST
     
     else:
         new_task = Task(
@@ -79,7 +80,7 @@ def add_task():
                     "description" : new_task.description,
                     "is_complete" : False
                 }
-            }, 201
+            }, HTTPStatus.CREATED
         else:
             return {
                 "task" : {
@@ -88,7 +89,7 @@ def add_task():
                     "description" : new_task.description,
                     "is_complete" : True
                 }
-            }, 201
+            }, HTTPStatus.CREATED
 
 @task_bp.route("/<task_id>", methods=["GET"])
 def get_specific_task(task_id):
@@ -105,7 +106,7 @@ def get_specific_task(task_id):
                 "description" : task.description,
                 "is_complete" : False
             }
-        }, 200
+        }, HTTPStatus.OK
     else:
         return {
             "task" : {
@@ -114,7 +115,7 @@ def get_specific_task(task_id):
                 "description" : task.description,
                 "is_complete" : True
             }
-    }, 200
+    }, HTTPStatus.OK
     # return {
     #     "task" : {
     #         "id" : task.id,
@@ -126,11 +127,12 @@ def get_specific_task(task_id):
 
 
 @task_bp.route("/<task_id>", methods=["PUT"])
+# ***** add code for catching bad request in form 400 code ivalid data****
 def change_specific_task(task_id):
 
     task = Task.query.get(task_id)
     if task is None:
-        return "", 404
+        return "", HTTPStatus.NOT_FOUND
     form_data = request.get_json()
 
     task.description = form_data["description"]
@@ -145,7 +147,7 @@ def change_specific_task(task_id):
                 "description" : task.description,
                 "is_complete" : False
             }
-        }, 200
+        }, HTTPStatus.OK
     else:
         return {
             "task" : {
@@ -154,20 +156,20 @@ def change_specific_task(task_id):
                 "description" : task.description,
                 "is_complete" : True
             }
-        }, 200
+        }, HTTPStatus.OK
 
 @task_bp.route("/<task_id>", methods=["DELETE"])
 def delete_specific_task(task_id):
     task = Task.query.get(task_id)
     if task is None:
-        return "", 404
+        return "", HTTPStatus.NOT_FOUND
 
     db.session.delete(task)
     db.session.commit()
 
     return {
         "details" : f'Task {task.task_id} "{task.title}" successfully deleted'
-        }, 200
+        }, HTTPStatus.OK
 
 
 # *** wave 3 begins ***
@@ -178,7 +180,7 @@ def update_specific_task_complete(task_id):
     task = Task.query.get(task_id)
 
     if task is None:
-        return "", 404
+        return "", HTTPStatus.NOT_FOUND
 
     task.completed_at = date.today()
     db.session.commit()
@@ -199,7 +201,7 @@ def update_specific_task_complete(task_id):
                 "description": task.description,
                 "is_complete": True
         }
-    }, 200
+    }, HTTPStatus.OK
 
 
 
@@ -209,7 +211,7 @@ def update_specific_task_incomplete(task_id):
     task = Task.query.get(task_id)
 
     if task is None:
-        return "", 404
+        return "", HTTPStatus.NOT_FOUND
 
     task.completed_at = None
     db.session.commit()
@@ -221,6 +223,6 @@ def update_specific_task_incomplete(task_id):
                 "description": task.description,
                 "is_complete": False
         }
-    }, 200
+    }, HTTPStatus.OK
     
 
