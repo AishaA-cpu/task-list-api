@@ -2,6 +2,9 @@
 class Project_helpers:
 
     def response(self, task):
+        if task is None:
+            return ""
+            
         if task.goal_id is None:
             return {
                     "id" : task.task_id,

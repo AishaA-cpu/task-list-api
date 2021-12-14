@@ -39,22 +39,7 @@ def handle_tasks():
             Response.response(task)
         )
 
-    # for task in tasks:
-    #     if task.completed_at is None:
-    #         response_body.append({
-    #             "id" : task.task_id,
-    #             "title": task.title,
-    #             "description": task.description,
-    #             "is_complete": False
-    #         }) 
-    #     else:
-    #         response_body.append({
-    #             "id" : task.task_id,
-    #             "title": task.title,
-    #             "description": task.description,
-    #             "is_complete": True
-    #         }) 
-    
+
 
     if sorting_parameter and sorting_parameter == "asc":
         response_body.sort(key=lambda x: x["title"])
@@ -93,25 +78,9 @@ def add_task():
         db.session.add(new_task)
         db.session.commit()
 
-        #if new_task.completed_at is None:
+        
         return {"task": Response.response(new_task)}, HTTPStatus.CREATED
-            # return {
-            #     "task" : {
-            #         "id" : new_task.task_id,
-            #         "title" : new_task.title,
-            #         "description" : new_task.description,
-            #         "is_complete" : False
-            #     }
-            # }, HTTPStatus.CREATED
-        # else:
-        #     return {
-        #         "task" : {
-        #             "id" : new_task.task_id,
-        #             "title" : new_task.title,
-        #             "description" : new_task.description,
-        #             "is_complete" : True
-        #         }
-        #     }, HTTPStatus.CREATED
+
 
 @task_bp.route("/<task_id>", methods=["GET"])
 def get_specific_task(task_id):
@@ -130,24 +99,7 @@ def get_specific_task(task_id):
         "task" : Response.response(task)
     }, HTTPStatus.OK
 
-    # if task.completed_at is None:
-    #     return {
-    #         "task" : {
-    #             "id" : task.task_id,
-    #             "title" : task.title,
-    #             "description" : task.description,
-    #             "is_complete" : False
-    #         }
-    #     }, HTTPStatus.OK
-    # else:
-    #     return {
-    #         "task" : {
-    #             "id" : task.task_id,
-    #             "title" : task.title,
-    #             "description" : task.description,
-    #             "is_complete" : True
-    #         }
-    # }, HTTPStatus.OK
+
 
 
 @task_bp.route("/<task_id>", methods=["PUT"])
@@ -176,24 +128,7 @@ def change_specific_task(task_id):
         "task" : Response.response(task)
     }, HTTPStatus.OK
 
-    # if task.completed_at is None:
-    #     return {
-    #         "task" : {
-    #             "id" : task.task_id,
-    #             "title" : task.title,
-    #             "description" : task.description,
-    #             "is_complete" : False
-    #         }
-    #     }, HTTPStatus.OK
-    # else:
-    #     return {
-    #         "task" : {
-    #             "id" : task.task_id,
-    #             "title" : task.title,
-    #             "description" : task.description,
-    #             "is_complete" : True
-    #         }
-    #     }, HTTPStatus.OK
+
 
 @task_bp.route("/<task_id>", methods=["DELETE"])
 def delete_specific_task(task_id):
@@ -246,14 +181,6 @@ def update_specific_task_complete(task_id):
         "task" : Response.response(task)
     }, HTTPStatus.OK
 
-    # return {
-    #     "task": {
-    #             "id": task.task_id,
-    #             "title": task.title,
-    #             "description": task.description,
-    #             "is_complete": True
-    #     }
-    # }, HTTPStatus.OK
 
 
 
@@ -279,14 +206,7 @@ def update_specific_task_incomplete(task_id):
     return {
         "task" : Response.response(task)
     }, HTTPStatus.OK
-    # return {
-    #     "task": {
-    #             "id": task.task_id,
-    #             "title": task.title,
-    #             "description": task.description,
-    #             "is_complete": False
-    #     }
-    # }, HTTPStatus.OK
+
     
 # *** wave 5 begins ****
 @goal_bp.route("", methods=["GET"])
