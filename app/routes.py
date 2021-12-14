@@ -368,7 +368,7 @@ def add_goal():
 @goal_bp.route("/<goal_id>", methods=["PUT"])
 def update_goal(goal_id):
     """
-    Updates goal
+    Updates goal title required by test, returns updated goal name
     """
     request_body = request.get_json()
     goal = Goal.query.get(goal_id)
@@ -376,10 +376,10 @@ def update_goal(goal_id):
     if goal is None:
         return "", HTTPStatus.NOT_FOUND
 
-    # if "title" not in request_body:
-    #     return {
-    #         "details": "Invalid data"
-    #     }, HTTPStatus.BAD_REQUEST
+    if "title" not in request_body:
+        return {
+            "details": "Invalid data"
+        }, HTTPStatus.BAD_REQUEST
         
     goal.title = request_body["title"]
     
@@ -394,6 +394,9 @@ def update_goal(goal_id):
 
 @goal_bp.route("/<goal_id>", methods=["DELETE"])
 def delete_one_goal(goal_id):
+    """
+    deletes goal from db
+    """
     
     goal = Goal.query.get(goal_id)
 
@@ -406,4 +409,64 @@ def delete_one_goal(goal_id):
     return {
         "details" : f'Goal {goal.goal_id} "{goal.title}" successfully deleted'
     }, HTTPStatus.OK
+
+@goal_bp.route("/<goal_id>/tasks", methods=["POST"])
+def assign_tasks_to_goal(goal_id):
+    """
+    assigns exsisting tasks to goals
+    """
+    request_body = request.get_json()
+
+    task_ids = request_body["task_ids"]
+    goal = Goal.query.get(goal_id)
     
+    if goal is None:
+        return {
+            "", HTTPStatus.NOT_FOUND
+        }
+        
+
+    for id in request_body["task_ids"]:
+        goal.tasks.append(Task.query.get(id))
+
+    db.session.commit()
+
+    return {
+        # "successfully created"
+        "id":  goal.goal_id,
+        "task_ids": task_ids
+    }, HTTPStatus.OK
+
+@goal_bp.route("/<goal_id>/tasks", methods=["GET"])
+def get_tasks_for_specific_goal(goal_id):
+    """
+    gets tasks associated with goal
+    """
+    request_body = request.get_json
+    Response = Project_helpers()
+
+    goal = Goal.query.get(goal_id)
+    if goal is None:
+        return "", HTTPStatus.NOT_FOUND
+
+    response = {
+        "id": goal.goal_id,
+        "title": goal.title,
+        "tasks": []
+        }
+
+    for task in goal.tasks:
+        response["tasks"].append(
+            Response.response(task)
+            # {
+            #     "id" : task.task_id,
+            #     "goal_id" : goal.goal_id,
+            #     "title": task.title,
+            #     "description": task.description,
+            #     "is_complete": Response.completed_status(task)
+            # }
+        )
+    
+
+    return response, HTTPStatus.OK
+
